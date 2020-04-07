@@ -1,4 +1,4 @@
-const assert = require('assert')
+/* const assert = require('assert')
 const Postgres = require('./../db/strategies/postgres')
 const Context = require('./../db/strategies/base/contextStrategy')
 
@@ -55,4 +55,4 @@ describe('Postgres Strategy', function() {
         const result = await context.delete(item.id)
         assert.deepEqual(result, 1)
     })
-})
+}) */
