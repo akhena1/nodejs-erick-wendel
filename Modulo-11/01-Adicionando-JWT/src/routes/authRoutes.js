@@ -1,66 +1,70 @@
 const BaseRoute = require('./base/baseRoute')
 const Joi = require('joi')
 const Boom = require('boom')
-
-//npm i  jsonwebtoken
-
-const Jwt = require('jsonwebtoken')
-
-const failAction = (request, headers, erro) => {
-    throw erro;
-}
+const PasswordHelper = require('./../helpers/passwordHelper')
 const USER = {
     username: 'xuxadasilva',
     password: '123'
 }
+const Jwt = require('jsonwebtoken')
 
-class AuthRoute extends BaseRoute {
-    constructor(secret) {
+class AuthRoutes extends BaseRoute {
+    constructor(key, db) {
         super()
+        this.secret = key
+        this.db = db
     }
+
     login() {
+
         return {
             path: '/login',
             method: 'POST',
             config: {
                 auth: false,
                 tags: ['api'],
-                description: 'Obter token',
-                notes: 'Faz login com o usuario e senha do banco de dados',
+                description: 'fazer login',
+                notes: 'retorna o token',
                 validate: {
-                    failAction,
                     payload: {
                         username: Joi.string().required(),
                         password: Joi.string().required()
                     }
                 }
             },
-            handler: async (request) => {
-                try {
-                    const { username, password } = request.payload
+            handler: async (request, headers) => {
+                const {
+                    username,
+                    password
+                } = request.payload
 
-                    if (
-                        username.toLowerCase() !== USER.username ||
-                        password !== USER.password
-                    )
-                        return Boom.unauthorized()
+                const [user] = await this.db.read({
+                    username: username.toLowerCase()
+                })
 
-                    const token = Jwt.sign({
-                        username: username,
-                        id: 1
-                    }, 'MinhaChaveSecretona')
-                    return {
-                        token
-                    }
-                } catch (error) {
-                    console.error('deu ruim: ', error)
+                if (!user) {
+                    return Boom.unauthorized('O usuario informado nao existe')
+                }
+
+                const match = await PasswordHelper.comparePassword(password, user.password)
+
+                if (!match) {
+                    return Boom.unauthorized('O usuario e senha invalidos!')
+                }
+
+                // if (
+                //     username.toLowerCase() !== USER.username ||
+                //     password !== USER.password
+                // )
+                //     return Boom.unauthorized()
+
+                return {
+                    token: Jwt.sign({
+                        username: username
+                    }, this.secret)
                 }
             }
         }
-
-
     }
-
 }
-
-module.exports = AuthRoute
+module.exports = AuthRoutes

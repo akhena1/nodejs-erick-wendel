@@ -1,7 +1,8 @@
 class BaseRoute {
-    static methods(){
+    static methods() {
         return Object.getOwnPropertyNames(this.prototype)
-                    .filter(method => method !== 'constructor' && !method.startsWith('_'))
+            .filter(method => method !== 'constructor' && !method.startsWith('_'))
     }
 }
+
 module.exports = BaseRoute
